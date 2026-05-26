@@ -3,52 +3,46 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Trading Terminal</title>
+<title>Pro Trading Terminal</title>
+
+<script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
 
 <style>
-  * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    font-family: Arial, sans-serif;
-  }
-
   body {
+    margin: 0;
     background: #0b0f14;
-    color: white;
-    height: 100vh;
+    color: #fff;
+    font-family: Arial, sans-serif;
     overflow: hidden;
   }
 
-  /* Layout */
   .container {
     display: flex;
     height: 100vh;
-    width: 100%;
   }
 
   /* Sidebar */
   .sidebar {
     width: 70px;
     background: #111827;
+    border-right: 1px solid #1f2937;
     display: flex;
     flex-direction: column;
     align-items: center;
     padding: 15px 0;
-    gap: 20px;
-    border-right: 1px solid #1f2937;
+    gap: 18px;
   }
 
   .logo {
-    width: 35px;
-    height: 35px;
+    width: 34px;
+    height: 34px;
     background: #3b82f6;
     border-radius: 10px;
   }
 
   .icon {
-    width: 30px;
-    height: 30px;
+    width: 28px;
+    height: 28px;
     background: #1f2937;
     border-radius: 8px;
   }
@@ -62,58 +56,52 @@
 
   /* Topbar */
   .topbar {
-    height: 50px;
+    height: 52px;
     background: #0f172a;
     border-bottom: 1px solid #1f2937;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0 15px;
+    padding: 0 16px;
   }
 
   .price {
-    color: #22c55e;
     font-weight: bold;
+    color: #22c55e;
   }
 
-  /* Middle */
+  /* Content */
   .content {
     flex: 1;
     display: flex;
+    overflow: hidden;
   }
 
   /* Chart */
   .chart {
     flex: 1;
-    background: #0b1220;
     margin: 10px;
-    border: 1px solid #1f2937;
     border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #64748b;
+    border: 1px solid #1f2937;
+    background: #0b1220;
+    overflow: hidden;
   }
 
   /* Right panel */
   .right {
-    width: 350px;
+    width: 360px;
+    border-left: 1px solid #1f2937;
     display: flex;
     flex-direction: column;
-    border-left: 1px solid #1f2937;
   }
 
   .panel {
     flex: 1;
+    margin: 10px;
     background: #0f172a;
-    margin: 10px 10px 5px 10px;
-    border-radius: 10px;
     border: 1px solid #1f2937;
+    border-radius: 10px;
     padding: 10px;
-  }
-
-  .order-box {
-    margin-top: 10px;
   }
 
   input {
@@ -132,21 +120,25 @@
     margin-top: 10px;
     border: none;
     border-radius: 6px;
-    cursor: pointer;
     font-weight: bold;
+    cursor: pointer;
   }
 
-  .buy {
-    background: #22c55e;
+  .buy { background: #22c55e; }
+  .sell { background: #ef4444; }
+
+  /* Order book */
+  .book {
+    font-size: 12px;
+    margin-top: 10px;
   }
 
-  .sell {
-    background: #ef4444;
-  }
+  .up { color: #22c55e; }
+  .down { color: #ef4444; }
 
   /* Bottom */
   .bottom {
-    height: 180px;
+    height: 200px;
     border-top: 1px solid #1f2937;
     background: #0f172a;
     padding: 10px;
@@ -156,18 +148,15 @@
   table {
     width: 100%;
     font-size: 12px;
-    color: #cbd5e1;
   }
 
   th, td {
-    padding: 5px;
     text-align: left;
+    padding: 5px;
+    color: #cbd5e1;
   }
 
-  th {
-    color: #94a3b8;
-  }
-
+  th { color: #94a3b8; }
 </style>
 </head>
 
@@ -189,35 +178,33 @@
     <!-- Topbar -->
     <div class="topbar">
       <div>BTC / USD</div>
-      <div class="price">$42,891.22</div>
+      <div class="price" id="price">$42000</div>
     </div>
 
     <!-- Content -->
     <div class="content">
 
       <!-- Chart -->
-      <div class="chart">
-        Trading Chart Area (Add TradingView later)
-      </div>
+      <div id="chart" class="chart"></div>
 
-      <!-- Right Panel -->
+      <!-- Right -->
       <div class="right">
 
+        <!-- Order panel -->
         <div class="panel">
-          <h3>Order Panel</h3>
+          <h3>Trade Panel</h3>
 
-          <div class="order-box">
-            <input type="text" placeholder="Amount"/>
-            <input type="text" placeholder="Price"/>
+          <input id="amount" placeholder="BTC amount"/>
 
-            <button class="buy">BUY</button>
-            <button class="sell">SELL</button>
-          </div>
-        </div>
+          <button class="buy" onclick="buy()">BUY</button>
+          <button class="sell" onclick="sell()">SELL</button>
 
-        <div class="panel">
-          <h3>Order Book</h3>
-          <p style="color:#64748b; font-size:12px;">(Live data later)</p>
+          <p id="balance" style="color:#94a3b8;margin-top:10px;">
+            Balance: $10000
+          </p>
+
+          <h4 style="margin-top:10px;">Order Book</h4>
+          <div class="book" id="book"></div>
         </div>
 
       </div>
@@ -226,28 +213,185 @@
 
     <!-- Bottom -->
     <div class="bottom">
-      <h3 style="margin-bottom:10px;">Positions</h3>
-
+      <h3>Positions</h3>
       <table>
-        <tr>
-          <th>Asset</th>
-          <th>Size</th>
-          <th>Entry</th>
-          <th>PnL</th>
-        </tr>
-
-        <tr>
-          <td>BTC</td>
-          <td>0.12</td>
-          <td>$41,200</td>
-          <td style="color:#22c55e;">+3.8%</td>
-        </tr>
+        <thead>
+          <tr>
+            <th>Asset</th>
+            <th>Size</th>
+            <th>Entry</th>
+            <th>Current</th>
+            <th>PnL</th>
+          </tr>
+        </thead>
+        <tbody id="positions"></tbody>
       </table>
     </div>
 
   </div>
-
 </div>
 
+<script>
+/* ===================== STATE ===================== */
+let price = 42000;
+let balance = 10000;
+let positions = [];
+
+/* ===================== UI ELEMENTS ===================== */
+const priceEl = document.getElementById("price");
+const balanceEl = document.getElementById("balance");
+const positionsEl = document.getElementById("positions");
+const bookEl = document.getElementById("book");
+
+/* ===================== PRICE ENGINE ===================== */
+setInterval(() => {
+  let change = (Math.random() - 0.5) * 250;
+  price += change;
+
+  priceEl.innerText = "$" + price.toFixed(2);
+  priceEl.className = "price " + (change > 0 ? "up" : "down");
+
+  updatePositions();
+  updateOrderBook();
+}, 1000);
+
+/* ===================== ORDER BOOK ===================== */
+function updateOrderBook() {
+  let html = "";
+
+  for (let i = 0; i < 6; i++) {
+    let bid = price - Math.random() * 100;
+    let ask = price + Math.random() * 100;
+
+    html += `
+      <div class="up">BUY ${bid.toFixed(2)}</div>
+      <div class="down">SELL ${ask.toFixed(2)}</div>
+    `;
+  }
+
+  bookEl.innerHTML = html;
+}
+
+/* ===================== TRADING ===================== */
+function buy() {
+  let amt = parseFloat(document.getElementById("amount").value);
+  if (!amt) return;
+
+  let cost = amt * price;
+  if (cost > balance) return alert("No balance");
+
+  balance -= cost;
+
+  positions.push({
+    size: amt,
+    entry: price
+  });
+
+  updateUI();
+}
+
+function sell() {
+  let amt = parseFloat(document.getElementById("amount").value);
+  if (!amt) return;
+
+  let pos = positions.find(p => p.size >= amt);
+  if (!pos) return alert("No position");
+
+  balance += amt * price;
+
+  pos.size -= amt;
+  if (pos.size <= 0) {
+    positions = positions.filter(p => p.size > 0);
+  }
+
+  updateUI();
+}
+
+/* ===================== POSITIONS ===================== */
+function updatePositions() {
+  positionsEl.innerHTML = "";
+
+  positions.forEach(p => {
+    let pnl = (price - p.entry) * p.size;
+
+    positionsEl.innerHTML += `
+      <tr>
+        <td>BTC</td>
+        <td>${p.size.toFixed(4)}</td>
+        <td>${p.entry.toFixed(2)}</td>
+        <td>${price.toFixed(2)}</td>
+        <td class="${pnl >= 0 ? 'up' : 'down'}">
+          ${pnl.toFixed(2)}
+        </td>
+      </tr>
+    `;
+  });
+}
+
+/* ===================== UI ===================== */
+function updateUI() {
+  balanceEl.innerText = "Balance: $" + balance.toFixed(2);
+  updatePositions();
+}
+
+/* ===================== CHART ===================== */
+const chart = LightweightCharts.createChart(document.getElementById("chart"), {
+  layout: {
+    background: { color: "#0b1220" },
+    textColor: "#cbd5e1",
+  },
+  grid: {
+    vertLines: { color: "#1f2937" },
+    horzLines: { color: "#1f2937" },
+  }
+});
+
+const candleSeries = chart.addCandlestickSeries();
+
+let candles = [];
+let base = 42000;
+
+/* initial candles */
+for (let i = 0; i < 60; i++) {
+  let open = base;
+  let close = open + (Math.random() - 0.5) * 300;
+  let high = Math.max(open, close) + Math.random() * 100;
+  let low = Math.min(open, close) - Math.random() * 100;
+
+  candles.push({
+    time: Math.floor(Date.now()/1000) - (60 - i) * 60,
+    open, high, low, close
+  });
+
+  base = close;
+}
+
+candleSeries.setData(candles);
+
+/* live candles */
+setInterval(() => {
+  let last = candles[candles.length - 1];
+
+  let open = last.close;
+  let close = open + (Math.random() - 0.5) * 250;
+  let high = Math.max(open, close) + Math.random() * 100;
+  let low = Math.min(open, close) - Math.random() * 100;
+
+  candles.push({
+    time: last.time + 60,
+    open, high, low, close
+  });
+
+  candles = candles.slice(-100);
+  candleSeries.setData(candles);
+
+}, 2000);
+
+/* init */
+updateOrderBook();
+updateUI();
+
+</script>
+
 </body>
-  </html>
+</html>
