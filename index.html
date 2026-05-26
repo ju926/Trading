@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Trading Terminal</title>
+
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+  }
+
+  body {
+    background: #0b0f14;
+    color: white;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  /* Layout */
+  .container {
+    display: flex;
+    height: 100vh;
+    width: 100%;
+  }
+
+  /* Sidebar */
+  .sidebar {
+    width: 70px;
+    background: #111827;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 15px 0;
+    gap: 20px;
+    border-right: 1px solid #1f2937;
+  }
+
+  .logo {
+    width: 35px;
+    height: 35px;
+    background: #3b82f6;
+    border-radius: 10px;
+  }
+
+  .icon {
+    width: 30px;
+    height: 30px;
+    background: #1f2937;
+    border-radius: 8px;
+  }
+
+  /* Main */
+  .main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Topbar */
+  .topbar {
+    height: 50px;
+    background: #0f172a;
+    border-bottom: 1px solid #1f2937;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 15px;
+  }
+
+  .price {
+    color: #22c55e;
+    font-weight: bold;
+  }
+
+  /* Middle */
+  .content {
+    flex: 1;
+    display: flex;
+  }
+
+  /* Chart */
+  .chart {
+    flex: 1;
+    background: #0b1220;
+    margin: 10px;
+    border: 1px solid #1f2937;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #64748b;
+  }
+
+  /* Right panel */
+  .right {
+    width: 350px;
+    display: flex;
+    flex-direction: column;
+    border-left: 1px solid #1f2937;
+  }
+
+  .panel {
+    flex: 1;
+    background: #0f172a;
+    margin: 10px 10px 5px 10px;
+    border-radius: 10px;
+    border: 1px solid #1f2937;
+    padding: 10px;
+  }
+
+  .order-box {
+    margin-top: 10px;
+  }
+
+  input {
+    width: 100%;
+    padding: 10px;
+    margin-top: 8px;
+    background: #111827;
+    border: 1px solid #1f2937;
+    color: white;
+    border-radius: 6px;
+  }
+
+  button {
+    width: 100%;
+    padding: 10px;
+    margin-top: 10px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+  }
+
+  .buy {
+    background: #22c55e;
+  }
+
+  .sell {
+    background: #ef4444;
+  }
+
+  /* Bottom */
+  .bottom {
+    height: 180px;
+    border-top: 1px solid #1f2937;
+    background: #0f172a;
+    padding: 10px;
+    overflow: auto;
+  }
+
+  table {
+    width: 100%;
+    font-size: 12px;
+    color: #cbd5e1;
+  }
+
+  th, td {
+    padding: 5px;
+    text-align: left;
+  }
+
+  th {
+    color: #94a3b8;
+  }
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="logo"></div>
+    <div class="icon"></div>
+    <div class="icon"></div>
+    <div class="icon"></div>
+  </div>
+
+  <!-- Main -->
+  <div class="main">
+
+    <!-- Topbar -->
+    <div class="topbar">
+      <div>BTC / USD</div>
+      <div class="price">$42,891.22</div>
+    </div>
+
+    <!-- Content -->
+    <div class="content">
+
+      <!-- Chart -->
+      <div class="chart">
+        Trading Chart Area (Add TradingView later)
+      </div>
+
+      <!-- Right Panel -->
+      <div class="right">
+
+        <div class="panel">
+          <h3>Order Panel</h3>
+
+          <div class="order-box">
+            <input type="text" placeholder="Amount"/>
+            <input type="text" placeholder="Price"/>
+
+            <button class="buy">BUY</button>
+            <button class="sell">SELL</button>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h3>Order Book</h3>
+          <p style="color:#64748b; font-size:12px;">(Live data later)</p>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- Bottom -->
+    <div class="bottom">
+      <h3 style="margin-bottom:10px;">Positions</h3>
+
+      <table>
+        <tr>
+          <th>Asset</th>
+          <th>Size</th>
+          <th>Entry</th>
+          <th>PnL</th>
+        </tr>
+
+        <tr>
+          <td>BTC</td>
+          <td>0.12</td>
+          <td>$41,200</td>
+          <td style="color:#22c55e;">+3.8%</td>
+        </tr>
+      </table>
+    </div>
+
+  </div>
+
+</div>
+
+</body>
+  </html>
