@@ -3,8 +3,9 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Pro Trading Terminal</title>
+<title>Pro Exchange Terminal</title>
 
+<!-- TradingView Lightweight Charts -->
 <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
 
 <style>
@@ -54,7 +55,6 @@
     flex-direction: column;
   }
 
-  /* Topbar */
   .topbar {
     height: 52px;
     background: #0f172a;
@@ -70,7 +70,6 @@
     color: #22c55e;
   }
 
-  /* Content */
   .content {
     flex: 1;
     display: flex;
@@ -102,6 +101,7 @@
     border: 1px solid #1f2937;
     border-radius: 10px;
     padding: 10px;
+    overflow: hidden;
   }
 
   input {
@@ -127,18 +127,18 @@
   .buy { background: #22c55e; }
   .sell { background: #ef4444; }
 
-  /* Order book */
   .book {
     font-size: 12px;
     margin-top: 10px;
+    height: 200px;
+    overflow: auto;
   }
 
   .up { color: #22c55e; }
   .down { color: #ef4444; }
 
-  /* Bottom */
   .bottom {
-    height: 200px;
+    height: 220px;
     border-top: 1px solid #1f2937;
     background: #0f172a;
     padding: 10px;
@@ -177,8 +177,8 @@
 
     <!-- Topbar -->
     <div class="topbar">
-      <div>BTC / USD</div>
-      <div class="price" id="price">$42000</div>
+      <div>BTC / USDT</div>
+      <div class="price" id="price">$0.00</div>
     </div>
 
     <!-- Content -->
@@ -190,9 +190,9 @@
       <!-- Right -->
       <div class="right">
 
-        <!-- Order panel -->
         <div class="panel">
-          <h3>Trade Panel</h3>
+
+          <h3>Trade</h3>
 
           <input id="amount" placeholder="BTC amount"/>
 
@@ -203,8 +203,9 @@
             Balance: $10000
           </p>
 
-          <h4 style="margin-top:10px;">Order Book</h4>
+          <h4>Order Book</h4>
           <div class="book" id="book"></div>
+
         </div>
 
       </div>
@@ -214,6 +215,7 @@
     <!-- Bottom -->
     <div class="bottom">
       <h3>Positions</h3>
+
       <table>
         <thead>
           <tr>
@@ -232,53 +234,98 @@
 </div>
 
 <script>
-/* ===================== STATE ===================== */
-let price = 42000;
+
+/* ================= STATE ================= */
+let price = 0;
 let balance = 10000;
 let positions = [];
 
-/* ===================== UI ELEMENTS ===================== */
+/* ================= UI ================= */
 const priceEl = document.getElementById("price");
 const balanceEl = document.getElementById("balance");
 const positionsEl = document.getElementById("positions");
 const bookEl = document.getElementById("book");
 
-/* ===================== PRICE ENGINE ===================== */
-setInterval(() => {
-  let change = (Math.random() - 0.5) * 250;
-  price += change;
+/* ================= LIVE PRICE (BINANCE) ================= */
+const tradeWS = new WebSocket("wss://stream.binance.com:9443/ws/btcusdt@trade");
+
+tradeWS.onmessage = (event) => {
+  const data = JSON.parse(event.data);
+  price = parseFloat(data.p);
 
   priceEl.innerText = "$" + price.toFixed(2);
-  priceEl.className = "price " + (change > 0 ? "up" : "down");
 
   updatePositions();
-  updateOrderBook();
-}, 1000);
+};
 
-/* ===================== ORDER BOOK ===================== */
-function updateOrderBook() {
+/* ================= ORDER BOOK (REAL) ================= */
+const depthWS = new WebSocket("wss://stream.binance.com:9443/ws/btcusdt@depth10@100ms");
+
+depthWS.onmessage = (event) => {
+  const data = JSON.parse(event.data);
+
   let html = "";
 
-  for (let i = 0; i < 6; i++) {
-    let bid = price - Math.random() * 100;
-    let ask = price + Math.random() * 100;
+  data.bids.slice(0, 6).forEach(b => {
+    html += `<div class="up">BUY ${parseFloat(b[0]).toFixed(2)}</div>`;
+  });
 
-    html += `
-      <div class="up">BUY ${bid.toFixed(2)}</div>
-      <div class="down">SELL ${ask.toFixed(2)}</div>
-    `;
-  }
+  data.asks.slice(0, 6).forEach(a => {
+    html += `<div class="down">SELL ${parseFloat(a[0]).toFixed(2)}</div>`;
+  });
 
   bookEl.innerHTML = html;
-}
+};
 
-/* ===================== TRADING ===================== */
+/* ================= CHART ================= */
+const chart = LightweightCharts.createChart(document.getElementById("chart"), {
+  layout: {
+    background: { color: "#0b1220" },
+    textColor: "#cbd5e1",
+  },
+  grid: {
+    vertLines: { color: "#1f2937" },
+    horzLines: { color: "#1f2937" },
+  }
+});
+
+const candleSeries = chart.addCandlestickSeries();
+
+/* LIVE CANDLES */
+let candles = [];
+
+const klineWS = new WebSocket(
+  "wss://stream.binance.com:9443/ws/btcusdt@kline_1m"
+);
+
+klineWS.onmessage = (event) => {
+  const msg = JSON.parse(event.data);
+  const k = msg.k;
+
+  const candle = {
+    time: k.t / 1000,
+    open: parseFloat(k.o),
+    high: parseFloat(k.h),
+    low: parseFloat(k.l),
+    close: parseFloat(k.c)
+  };
+
+  const index = candles.findIndex(c => c.time === candle.time);
+
+  if (index >= 0) candles[index] = candle;
+  else candles.push(candle);
+
+  candles = candles.slice(-120);
+  candleSeries.setData(candles);
+};
+
+/* ================= TRADING ================= */
 function buy() {
-  let amt = parseFloat(document.getElementById("amount").value);
-  if (!amt) return;
+  const amt = parseFloat(document.getElementById("amount").value);
+  if (!amt || price === 0) return;
 
-  let cost = amt * price;
-  if (cost > balance) return alert("No balance");
+  const cost = amt * price;
+  if (cost > balance) return alert("Insufficient balance");
 
   balance -= cost;
 
@@ -291,15 +338,16 @@ function buy() {
 }
 
 function sell() {
-  let amt = parseFloat(document.getElementById("amount").value);
-  if (!amt) return;
+  const amt = parseFloat(document.getElementById("amount").value);
+  if (!amt || price === 0) return;
 
-  let pos = positions.find(p => p.size >= amt);
+  const pos = positions.find(p => p.size >= amt);
   if (!pos) return alert("No position");
+
+  pos.size -= amt;
 
   balance += amt * price;
 
-  pos.size -= amt;
   if (pos.size <= 0) {
     positions = positions.filter(p => p.size > 0);
   }
@@ -307,12 +355,12 @@ function sell() {
   updateUI();
 }
 
-/* ===================== POSITIONS ===================== */
+/* ================= POSITIONS ================= */
 function updatePositions() {
   positionsEl.innerHTML = "";
 
   positions.forEach(p => {
-    let pnl = (price - p.entry) * p.size;
+    const pnl = (price - p.entry) * p.size;
 
     positionsEl.innerHTML += `
       <tr>
@@ -328,68 +376,11 @@ function updatePositions() {
   });
 }
 
-/* ===================== UI ===================== */
+/* ================= UI UPDATE ================= */
 function updateUI() {
   balanceEl.innerText = "Balance: $" + balance.toFixed(2);
   updatePositions();
 }
-
-/* ===================== CHART ===================== */
-const chart = LightweightCharts.createChart(document.getElementById("chart"), {
-  layout: {
-    background: { color: "#0b1220" },
-    textColor: "#cbd5e1",
-  },
-  grid: {
-    vertLines: { color: "#1f2937" },
-    horzLines: { color: "#1f2937" },
-  }
-});
-
-const candleSeries = chart.addCandlestickSeries();
-
-let candles = [];
-let base = 42000;
-
-/* initial candles */
-for (let i = 0; i < 60; i++) {
-  let open = base;
-  let close = open + (Math.random() - 0.5) * 300;
-  let high = Math.max(open, close) + Math.random() * 100;
-  let low = Math.min(open, close) - Math.random() * 100;
-
-  candles.push({
-    time: Math.floor(Date.now()/1000) - (60 - i) * 60,
-    open, high, low, close
-  });
-
-  base = close;
-}
-
-candleSeries.setData(candles);
-
-/* live candles */
-setInterval(() => {
-  let last = candles[candles.length - 1];
-
-  let open = last.close;
-  let close = open + (Math.random() - 0.5) * 250;
-  let high = Math.max(open, close) + Math.random() * 100;
-  let low = Math.min(open, close) - Math.random() * 100;
-
-  candles.push({
-    time: last.time + 60,
-    open, high, low, close
-  });
-
-  candles = candles.slice(-100);
-  candleSeries.setData(candles);
-
-}, 2000);
-
-/* init */
-updateOrderBook();
-updateUI();
 
 </script>
 
