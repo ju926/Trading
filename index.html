@@ -3,17 +3,14 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Pro Exchange Terminal</title>
-
-<!-- TradingView Lightweight Charts -->
-<script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+<title>Binary Options Terminal</title>
 
 <style>
   body {
     margin: 0;
-    background: #0b0f14;
-    color: #fff;
     font-family: Arial, sans-serif;
+    background: #0b0f14;
+    color: white;
     overflow: hidden;
   }
 
@@ -22,101 +19,42 @@
     height: 100vh;
   }
 
-  /* Sidebar */
-  .sidebar {
-    width: 70px;
-    background: #111827;
+  /* LEFT PANEL */
+  .left {
+    width: 320px;
+    background: #0f172a;
     border-right: 1px solid #1f2937;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 15px 0;
-    gap: 18px;
-  }
-
-  .logo {
-    width: 34px;
-    height: 34px;
-    background: #3b82f6;
-    border-radius: 10px;
-  }
-
-  .icon {
-    width: 28px;
-    height: 28px;
-    background: #1f2937;
-    border-radius: 8px;
-  }
-
-  /* Main */
-  .main {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-  }
-
-  .topbar {
-    height: 52px;
-    background: #0f172a;
-    border-bottom: 1px solid #1f2937;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0 16px;
-  }
-
-  .price {
-    font-weight: bold;
-    color: #22c55e;
-  }
-
-  .content {
-    flex: 1;
-    display: flex;
-    overflow: hidden;
-  }
-
-  /* Chart */
-  .chart {
-    flex: 1;
-    margin: 10px;
-    border-radius: 10px;
-    border: 1px solid #1f2937;
-    background: #0b1220;
-    overflow: hidden;
-  }
-
-  /* Right panel */
-  .right {
-    width: 360px;
-    border-left: 1px solid #1f2937;
-    display: flex;
-    flex-direction: column;
-  }
-
-  .panel {
-    flex: 1;
-    margin: 10px;
-    background: #0f172a;
-    border: 1px solid #1f2937;
-    border-radius: 10px;
     padding: 10px;
-    overflow: hidden;
+  }
+
+  .mode-btn {
+    width: 100%;
+    padding: 10px;
+    margin: 6px 0;
+    border: none;
+    border-radius: 6px;
+    background: #111827;
+    color: white;
+    cursor: pointer;
+  }
+
+  .active {
+    background: #3b82f6 !important;
   }
 
   input {
     width: 100%;
     padding: 10px;
-    margin-top: 8px;
+    margin-top: 10px;
     background: #111827;
     border: 1px solid #1f2937;
     color: white;
     border-radius: 6px;
   }
 
-  button {
+  button.trade {
     width: 100%;
-    padding: 10px;
+    padding: 12px;
     margin-top: 10px;
     border: none;
     border-radius: 6px;
@@ -127,36 +65,63 @@
   .buy { background: #22c55e; }
   .sell { background: #ef4444; }
 
-  .book {
-    font-size: 12px;
-    margin-top: 10px;
-    height: 200px;
-    overflow: auto;
+  /* CENTER */
+  .center {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
   }
 
-  .up { color: #22c55e; }
-  .down { color: #ef4444; }
-
-  .bottom {
-    height: 220px;
-    border-top: 1px solid #1f2937;
+  .topbar {
+    height: 50px;
     background: #0f172a;
+    border-bottom: 1px solid #1f2937;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 15px;
+  }
+
+  .price {
+    font-size: 18px;
+    font-weight: bold;
+    color: #22c55e;
+  }
+
+  .chart {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #0b1220;
+    margin: 10px;
+    border-radius: 10px;
+    border: 1px solid #1f2937;
+  }
+
+  /* RIGHT */
+  .right {
+    width: 320px;
+    background: #0f172a;
+    border-left: 1px solid #1f2937;
     padding: 10px;
     overflow: auto;
   }
 
-  table {
-    width: 100%;
-    font-size: 12px;
+  .box {
+    background: #111827;
+    padding: 10px;
+    border-radius: 10px;
+    margin-bottom: 10px;
   }
 
-  th, td {
-    text-align: left;
-    padding: 5px;
-    color: #cbd5e1;
+  .result {
+    font-size: 14px;
   }
 
-  th { color: #94a3b8; }
+  .win { color: #22c55e; }
+  .lose { color: #ef4444; }
+
 </style>
 </head>
 
@@ -164,223 +129,179 @@
 
 <div class="container">
 
-  <!-- Sidebar -->
-  <div class="sidebar">
-    <div class="logo"></div>
-    <div class="icon"></div>
-    <div class="icon"></div>
-    <div class="icon"></div>
+  <!-- LEFT -->
+  <div class="left">
+    <h3>Binary Modes</h3>
+
+    <button class="mode-btn active" onclick="setMode('overunder')">Over / Under</button>
+    <button class="mode-btn" onclick="setMode('evenodd')">Even / Odd</button>
+    <button class="mode-btn" onclick="setMode('matchdiff')">Matches / Differs</button>
+
+    <input id="stake" placeholder="Stake $" />
+    
+    <button class="trade buy" onclick="trade('UP')">UP / EVEN / MATCH</button>
+    <button class="trade sell" onclick="trade('DOWN')">DOWN / ODD / DIFF</button>
+
+    <div class="box">
+      <div>Balance</div>
+      <h3 id="balance">$10000</h3>
+    </div>
+
+    <div class="box">
+      <div>Countdown</div>
+      <h2 id="timer">30</h2>
+    </div>
   </div>
 
-  <!-- Main -->
-  <div class="main">
+  <!-- CENTER -->
+  <div class="center">
 
-    <!-- Topbar -->
     <div class="topbar">
-      <div>BTC / USDT</div>
-      <div class="price" id="price">$0.00</div>
+      <div>BTC / USD (Binary Market)</div>
+      <div class="price" id="price">0</div>
     </div>
 
-    <!-- Content -->
-    <div class="content">
-
-      <!-- Chart -->
-      <div id="chart" class="chart"></div>
-
-      <!-- Right -->
-      <div class="right">
-
-        <div class="panel">
-
-          <h3>Trade</h3>
-
-          <input id="amount" placeholder="BTC amount"/>
-
-          <button class="buy" onclick="buy()">BUY</button>
-          <button class="sell" onclick="sell()">SELL</button>
-
-          <p id="balance" style="color:#94a3b8;margin-top:10px;">
-            Balance: $10000
-          </p>
-
-          <h4>Order Book</h4>
-          <div class="book" id="book"></div>
-
-        </div>
-
-      </div>
-
-    </div>
-
-    <!-- Bottom -->
-    <div class="bottom">
-      <h3>Positions</h3>
-
-      <table>
-        <thead>
-          <tr>
-            <th>Asset</th>
-            <th>Size</th>
-            <th>Entry</th>
-            <th>Current</th>
-            <th>PnL</th>
-          </tr>
-        </thead>
-        <tbody id="positions"></tbody>
-      </table>
+    <div class="chart">
+      Live Price Stream Active
     </div>
 
   </div>
+
+  <!-- RIGHT -->
+  <div class="right">
+    <h3>Results</h3>
+    <div id="results"></div>
+  </div>
+
 </div>
 
 <script>
 
 /* ================= STATE ================= */
+let mode = "overunder";
 let price = 0;
+let lastPrice = 0;
 let balance = 10000;
-let positions = [];
+
+let currentDigit = 0;
+let lastDigit = 0;
+
+let timer = 30;
+let interval;
 
 /* ================= UI ================= */
 const priceEl = document.getElementById("price");
 const balanceEl = document.getElementById("balance");
-const positionsEl = document.getElementById("positions");
-const bookEl = document.getElementById("book");
+const resultsEl = document.getElementById("results");
+const timerEl = document.getElementById("timer");
+
+/* ================= MODE ================= */
+function setMode(m) {
+  mode = m;
+  document.querySelectorAll(".mode-btn").forEach(b => b.classList.remove("active"));
+  event.target.classList.add("active");
+}
 
 /* ================= LIVE PRICE (BINANCE) ================= */
-const tradeWS = new WebSocket("wss://stream.binance.com:9443/ws/btcusdt@trade");
+const ws = new WebSocket("wss://stream.binance.com:9443/ws/btcusdt@trade");
 
-tradeWS.onmessage = (event) => {
-  const data = JSON.parse(event.data);
+ws.onmessage = (e) => {
+  const data = JSON.parse(e.data);
+
+  lastPrice = price;
   price = parseFloat(data.p);
 
-  priceEl.innerText = "$" + price.toFixed(2);
+  priceEl.innerText = price.toFixed(2);
 
-  updatePositions();
+  lastDigit = String(lastPrice).slice(-1);
+  currentDigit = String(price).slice(-1);
 };
 
-/* ================= ORDER BOOK (REAL) ================= */
-const depthWS = new WebSocket("wss://stream.binance.com:9443/ws/btcusdt@depth10@100ms");
+/* ================= TIMER ================= */
+function startTimer() {
+  clearInterval(interval);
 
-depthWS.onmessage = (event) => {
-  const data = JSON.parse(event.data);
+  timer = 30;
 
-  let html = "";
+  interval = setInterval(() => {
+    timer--;
+    timerEl.innerText = timer;
 
-  data.bids.slice(0, 6).forEach(b => {
-    html += `<div class="up">BUY ${parseFloat(b[0]).toFixed(2)}</div>`;
-  });
-
-  data.asks.slice(0, 6).forEach(a => {
-    html += `<div class="down">SELL ${parseFloat(a[0]).toFixed(2)}</div>`;
-  });
-
-  bookEl.innerHTML = html;
-};
-
-/* ================= CHART ================= */
-const chart = LightweightCharts.createChart(document.getElementById("chart"), {
-  layout: {
-    background: { color: "#0b1220" },
-    textColor: "#cbd5e1",
-  },
-  grid: {
-    vertLines: { color: "#1f2937" },
-    horzLines: { color: "#1f2937" },
-  }
-});
-
-const candleSeries = chart.addCandlestickSeries();
-
-/* LIVE CANDLES */
-let candles = [];
-
-const klineWS = new WebSocket(
-  "wss://stream.binance.com:9443/ws/btcusdt@kline_1m"
-);
-
-klineWS.onmessage = (event) => {
-  const msg = JSON.parse(event.data);
-  const k = msg.k;
-
-  const candle = {
-    time: k.t / 1000,
-    open: parseFloat(k.o),
-    high: parseFloat(k.h),
-    low: parseFloat(k.l),
-    close: parseFloat(k.c)
-  };
-
-  const index = candles.findIndex(c => c.time === candle.time);
-
-  if (index >= 0) candles[index] = candle;
-  else candles.push(candle);
-
-  candles = candles.slice(-120);
-  candleSeries.setData(candles);
-};
-
-/* ================= TRADING ================= */
-function buy() {
-  const amt = parseFloat(document.getElementById("amount").value);
-  if (!amt || price === 0) return;
-
-  const cost = amt * price;
-  if (cost > balance) return alert("Insufficient balance");
-
-  balance -= cost;
-
-  positions.push({
-    size: amt,
-    entry: price
-  });
-
-  updateUI();
+    if (timer <= 0) {
+      settle();
+      timer = 30;
+    }
+  }, 1000);
 }
 
-function sell() {
-  const amt = parseFloat(document.getElementById("amount").value);
-  if (!amt || price === 0) return;
+/* ================= TRADE ================= */
+let trades = [];
 
-  const pos = positions.find(p => p.size >= amt);
-  if (!pos) return alert("No position");
+function trade(dir) {
+  let stake = parseFloat(document.getElementById("stake").value);
+  if (!stake || stake <= 0 || stake > balance) return;
 
-  pos.size -= amt;
+  balance -= stake;
 
-  balance += amt * price;
-
-  if (pos.size <= 0) {
-    positions = positions.filter(p => p.size > 0);
-  }
-
-  updateUI();
-}
-
-/* ================= POSITIONS ================= */
-function updatePositions() {
-  positionsEl.innerHTML = "";
-
-  positions.forEach(p => {
-    const pnl = (price - p.entry) * p.size;
-
-    positionsEl.innerHTML += `
-      <tr>
-        <td>BTC</td>
-        <td>${p.size.toFixed(4)}</td>
-        <td>${p.entry.toFixed(2)}</td>
-        <td>${price.toFixed(2)}</td>
-        <td class="${pnl >= 0 ? 'up' : 'down'}">
-          ${pnl.toFixed(2)}
-        </td>
-      </tr>
-    `;
+  trades.push({
+    mode,
+    dir,
+    entryPrice: price,
+    entryDigit: currentDigit,
+    stake
   });
+
+  updateBalance();
 }
 
-/* ================= UI UPDATE ================= */
-function updateUI() {
-  balanceEl.innerText = "Balance: $" + balance.toFixed(2);
-  updatePositions();
+/* ================= SETTLE ================= */
+function settle() {
+  trades.forEach(t => {
+
+    let win = false;
+
+    if (t.mode === "overunder") {
+      win = (price > t.entryPrice && t.dir === "UP") ||
+            (price < t.entryPrice && t.dir === "DOWN");
+    }
+
+    if (t.mode === "evenodd") {
+      win = (parseInt(currentDigit) % 2 === 0 && t.dir === "UP") ||
+            (parseInt(currentDigit) % 2 !== 0 && t.dir === "DOWN");
+    }
+
+    if (t.mode === "matchdiff") {
+      win = (currentDigit === t.entryDigit && t.dir === "UP") ||
+            (currentDigit !== t.entryDigit && t.dir === "DOWN");
+    }
+
+    let payout = win ? t.stake * 1.8 : 0;
+
+    balance += payout;
+
+    showResult(t, win, payout);
+  });
+
+  trades = [];
+  updateBalance();
 }
+
+/* ================= RESULTS ================= */
+function showResult(t, win, payout) {
+  resultsEl.innerHTML = `
+    <div class="result ${win ? 'win' : 'lose'}">
+      ${t.mode.toUpperCase()} → ${win ? "WIN" : "LOSE"} +$${payout.toFixed(2)}
+    </div>
+  ` + resultsEl.innerHTML;
+}
+
+/* ================= BALANCE ================= */
+function updateBalance() {
+  balanceEl.innerText = "$" + balance.toFixed(2);
+}
+
+/* ================= START ================= */
+startTimer();
 
 </script>
 
